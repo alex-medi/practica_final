@@ -98,7 +98,7 @@ async function createUsuario(req, res) {
       const [rows] = await database.pool.query('SELECT * FROM usuarios WHERE email = ?', email);
   
       if (!rows || !rows.length) {
-        const error = new Error('No existe este usuario');
+        const error = new Error('El email es incorrecto');
         error.code = 404;
         throw error;
       }
@@ -110,13 +110,15 @@ async function createUsuario(req, res) {
       const isValidPassword = await bcrypt.compare(password, user.password);
   
       if (!isValidPassword) {
-        const error = new Error('La contraseña no es válida');
+        const error = new Error('La contraseña es incorrecta');
         error.code = 401;
         throw error;
       }
   
       // 3. Construimos el JWT para enviárselo al cliente.
-      const tokenPayload = { id: user.id, rol:user.experto };
+      const tokenPayload = { id: user.id };
+
+      //Hacer aqui un if para que confirme si el usuario es experto o no
   
       const token = jwt.sign(
         tokenPayload,
@@ -171,7 +173,7 @@ async function createUsuario(req, res) {
         empresa: Joi.string()
       });
   
-      await schema.validateAsync({ titulo, autor });
+      await schema.validateAsync({ login, password, experto, empresa });
   
       //se busca el usuario a modificar
       
@@ -185,7 +187,7 @@ async function createUsuario(req, res) {
       const passwordHash = await bcrypt.hash(password, 10);
       // modificar el usuario en la base de datos
       
-      await database.pool.query('UPDATE usuarios SET login = ?, password = ?, experto = ?, empresa = ? WHERE id = ?', [login, passwordHash, experto, empresa]);
+      await database.pool.query('UPDATE usuarios SET login = ?, password = ?, experto = ?, empresa = ? WHERE id = ?', [login, passwordHash, experto, empresa, id]);
   
       // devolvemos el usuario modificado.
       
