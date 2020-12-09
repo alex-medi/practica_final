@@ -67,7 +67,7 @@ async function createPregunta(req, res) {
      }
       //Aqui se selecciona por tematica          
       const [question] = await database.pool.query('select e.id_tematica, p.* from etiquetas e JOIN preguntas p  on e.id_pregunta = p.id where e.id_tematica = ?',tematicaId);
-      res.send(question[0]);
+      res.send(question);
     
     }catch(err){
       res.status(err.code || 500);

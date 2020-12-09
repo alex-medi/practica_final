@@ -43,11 +43,11 @@ async function createUsuario(req, res) {
         email: Joi.string().email().required(),
         login: Joi.string().required(),
         password: Joi.string().min(8).max(20).required(),
-        experto: Joi.string().required(),
+        experto: Joi.boolean().required(),
         empresa: Joi.string()
       });
       //validar la entrada (body)
-      await userSchema.validateAsync({ nombre, email, login, password, experto, empresa });
+      await userSchema.validateAsync({ nombre, email, login, password, experto });
           
       const [users] = await database.pool.query('SELECT * FROM usuarios WHERE email = ?', email);
       //comprobar si existe el email que viene en el body
@@ -126,7 +126,7 @@ async function createUsuario(req, res) {
         { expiresIn: '30d' },
       );
       
-      res.send({ token });
+      res.send({ token, login: user.login, id: user.id, empresa: user.empresa, experto: user.experto, nombre: user.nombre });
   
     } catch (err) {
       res.status(err.code || 500);
@@ -169,7 +169,7 @@ async function createUsuario(req, res) {
       schema = Joi.object({
         login: Joi.string().required(),
         password: Joi.string().min(8).max(20).required(),
-        experto: Joi.string().required(),
+        experto: Joi.boolean().required(),
         empresa: Joi.string()
       });
   

@@ -52,7 +52,32 @@ async function responderPregunta(req, res) {
    
    }
 
+   //Obtener respuestas por id de tematica
+   async function getRespuestasBypreguntasId(req, res) {
+    try {
+      
+      const { preguntaId } = req.params;
+
+      //comprobar si existe la pregunta
+     const [pregunta] = await database.pool.query('SELECT * FROM respuestas WHERE id_pregunta = ?', preguntaId);
+
+     if (!pregunta.length) {
+       const err = new Error('no existe esta pregunta');
+       err.code = 409;
+       throw err;
+     }
+      //Aqui se seleccionan todas las respuestas de una pregunta          
+      const [respuesta] = await database.pool.query('SELECT * FROM respuestas WHERE id_pregunta = ?', preguntaId);
+      res.send(respuesta);
+    
+    }catch(err){
+      res.status(err.code || 500);
+      res.send(err.message );
+    
+    }
+}
 module.exports = {
     responderPregunta,
+    getRespuestasBypreguntasId
     
   };

@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
+const cors = require('cors')
 
 const { TematicasController,
     UsuariosController,
@@ -13,7 +14,7 @@ const { validarAutorizacion } = require('./middlewares');
 const { HTTP_PORT } = process.env;
 
 const app = express();
-
+app.use(cors())
 app.use(bodyParser.json());
 
 // Endpoints / Rutas
@@ -35,6 +36,7 @@ app.get('/api/preguntas/:tematicaId', validarAutorizacion, PreguntasController.g
 
 //Respuestas
 app.post('/api/respuestas/:preguntaId', validarAutorizacion, RespuestasController.responderPregunta);
+app.get('/api/respuestas/:preguntaId', validarAutorizacion, RespuestasController.getRespuestasBypreguntasId);
 
 // Escuchar un puerto
 app.listen(HTTP_PORT, () => console.log(`Escuchando en el puerto ${HTTP_PORT}`));
