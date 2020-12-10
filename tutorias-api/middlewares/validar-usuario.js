@@ -31,7 +31,7 @@ async function validarAutorizacion(req, res, next) {
     next();
 
   } catch (err) {
-    res.status(err.code || 500);
+    res.status(err.httpCode || 500);
     res.send({ error: err.message });
   }
 }

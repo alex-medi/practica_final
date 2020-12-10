@@ -30,14 +30,13 @@ async function createPregunta(req, res) {
        const resuelta = 0;               
         
      //3. Insertar la pregunta
-     const [rows] = await database.pool.query('INSERT INTO preguntas (titulo, cuerpo, respondida, resuelta, id_usuario) VALUES (?, ?, ?, ?, ?)', [titulo,cuerpo,respondida,resuelta,id]);
+     const [rows] = await database.pool.query('INSERT INTO preguntas (titulo, cuerpo, respondida, resuelta, id_usuario, id_tematica) VALUES (?, ?, ?, ?, ?, ?)', [titulo,cuerpo,respondida,resuelta,id,tematicaId]);
    
        const {insertId} = rows;
 
-       //4. Insertamos las claves foráneas en la tabla etiquetas
-       await database.pool.query('INSERT INTO etiquetas (id_pregunta, id_tematica) VALUES (?,?)', [insertId,tematicaId]);
        
-       //5. Mostramos la pregunta
+       
+       //4. Mostramos la pregunta
        const [ask] = await database.pool.query('SELECT * FROM preguntas WHERE id = ?', insertId);
        res.status(201);
        res.send(ask[0]);
@@ -66,7 +65,7 @@ async function createPregunta(req, res) {
        throw err;
      }
       //Aqui se selecciona por tematica          
-      const [question] = await database.pool.query('select e.id_tematica, p.* from etiquetas e JOIN preguntas p  on e.id_pregunta = p.id where e.id_tematica = ?',tematicaId);
+      const [question] = await database.pool.query('SELECT * FROM preguntas WHERE id_tematica = ?',tematicaId);
       res.send(question);
     
     }catch(err){

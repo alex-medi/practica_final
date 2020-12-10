@@ -73,35 +73,46 @@ async function createUsuario(req, res) {
       const createdId = rows.insertId;
       //devolver usuario creado
       const [selectRows] = await database.pool.query('SELECT * FROM usuarios WHERE id = ?', createdId);
-  
-      res.send(selectRows[0]);
+      
+      const tokenPayload = { id: selectRows.id };
+              
+      const token = jwt.sign(
+        tokenPayload,
+        process.env.JWT_SECRET,
+        { expiresIn: '30d' },
+      );
+
+      res.send({token,...selectRows[0]});
   
     } catch (err) {
       res.status(err.code || 500);
-      res.send(err.message );
+      res.send({error:  err.message} );
     }
   }
 
   async function login(req, res) {
     try {
-      const { email, password }= req.body;
+      const { login, password }= req.body;
   
       const schema = Joi.object({
-        email: Joi.string().email().required(),
+        login: Joi.string().required(),
         password: Joi.string().min(8).max(20).required(),
       });
   
-      await schema.validateAsync({ email, password });
+      await schema.validateAsync({ login, password  });
   
       // 1. Recuperamos el usuario desde la base de datos.
             
-      const [rows] = await database.pool.query('SELECT * FROM usuarios WHERE email = ?', email);
+      const [rows] = await database.pool.query('SELECT * FROM usuarios WHERE login = ? OR email = ?', [login, login]);
+      
   
       if (!rows || !rows.length) {
-        const error = new Error('El email es incorrecto');
+        const error = new Error('El email o login es incorrecto');
         error.code = 404;
         throw error;
       }
+     
+      
   
       const user = rows[0];
   
@@ -117,9 +128,8 @@ async function createUsuario(req, res) {
   
       // 3. Construimos el JWT para enviárselo al cliente.
       const tokenPayload = { id: user.id };
-
-      //Hacer aqui un if para que confirme si el usuario es experto o no
-  
+         
+     
       const token = jwt.sign(
         tokenPayload,
         process.env.JWT_SECRET,
