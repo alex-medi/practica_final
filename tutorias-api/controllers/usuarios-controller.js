@@ -74,7 +74,7 @@ async function createUsuario(req, res) {
       //devolver usuario creado
       const [selectRows] = await database.pool.query('SELECT * FROM usuarios WHERE id = ?', createdId);
       
-      const tokenPayload = { id: selectRows.id };
+      const tokenPayload = { id: selectRows[0].id };
               
       const token = jwt.sign(
         tokenPayload,
@@ -111,9 +111,7 @@ async function createUsuario(req, res) {
         error.code = 404;
         throw error;
       }
-     
-      
-  
+             
       const user = rows[0];
   
       // 2. Comprobamos que el password que nos están enviando es válido.
@@ -136,7 +134,7 @@ async function createUsuario(req, res) {
         { expiresIn: '30d' },
       );
       
-      res.send({ token, login: user.login, id: user.id, empresa: user.empresa, experto: user.experto, nombre: user.nombre });
+      res.send({ token, login: user.login, id: user.id, empresa: user.empresa, experto: user.experto, nombre: user.nombre, email: user.email });
   
     } catch (err) {
       res.status(err.code || 500);
@@ -202,8 +200,16 @@ async function createUsuario(req, res) {
       // devolvemos el usuario modificado.
       
       const [selectRows] = await database.pool.query('SELECT * FROM usuarios WHERE id = ?', id);
+      const tokenPayload = { id: selectRows[0].id };
+              
+      const token = jwt.sign(
+        tokenPayload,
+        process.env.JWT_SECRET,
+        { expiresIn: '30d' },
+      );
+
   
-      res.send(selectRows[0]);
+      res.send({token,...selectRows[0]});
     } catch (err) {
       res.status(400);
       res.send({ error: err.message });

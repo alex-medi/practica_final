@@ -32,7 +32,9 @@ app.put('/api/usuarios/:id', UsuariosController.modifyUsuario);
 
 //Preguntas
 app.post('/api/preguntas/:tematicaId', validarAutorizacion, PreguntasController.createPregunta);
-app.get('/api/preguntas/:tematicaId', validarAutorizacion, PreguntasController.getPreguntasBytematicaId);
+app.get('/api/preguntas/:tematicaId', PreguntasController.getPreguntasBytematicaId);
+app.get('/api/pregunta/:key', PreguntasController.getPreguntasByKey);
+
 
 //Respuestas
 app.post('/api/respuestas/:preguntaId', validarAutorizacion, RespuestasController.responderPregunta);

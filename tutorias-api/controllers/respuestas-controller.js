@@ -5,7 +5,7 @@ const { database } = require('../infraestructure');
 async function responderPregunta(req, res) {
     try{
      const { preguntaId } = req.params;
-     const { id } = req.auth;
+     const { id, experto } = req.auth;
      
      const { descripcion } = req.body;
    
@@ -16,8 +16,15 @@ async function responderPregunta(req, res) {
      });
      await Schema.validateAsync({ descripcion });
 
+     if (!experto) {
+      const err = new Error('El usuario no es experto');
+      err.code = 409;
+      throw err;
+    }
+     
      //comprobar si existe la pregunta
      const [pregunta] = await database.pool.query('SELECT * FROM preguntas WHERE id = ?', preguntaId);
+      
 
       if (!pregunta.length) {
         const err = new Error('no existe esta pregunta');

@@ -75,8 +75,39 @@ async function createPregunta(req, res) {
     }
 }
 
+//Obtener preguntas por palabras clave
+async function getPreguntasByKey(req, res) {
+  try {
+    // validamos que lo que se ha escrito es correcto
+    const { key } = req.params;
+    const schema = Joi.string();
+    await schema.validateAsync(key);
+    const key2 = '%'+key+'%';
+         
+    const [clave] = await database.pool.query('SELECT * FROM preguntas WHERE titulo like ? or cuerpo like ?',[key2,key2]);
+
+    if (!clave || !clave.length) {
+      // devolvemos 404 Not Found si no lo encontramos en la en base de datos.
+      res.status(404);
+
+      return res.send({ error: 'la busqueda no produjo ningun resultado' });
+    }
+    
+    return res.send(clave);
+
+  } catch (err) {
+    // enviamos el error al cliente
+    res.status(400);
+    res.send({ error: err.message });
+  }
+}
+
    module.exports = {
     createPregunta,
     getPreguntasBytematicaId,
-    
+    getPreguntasByKey
   };
+
+
+
+  

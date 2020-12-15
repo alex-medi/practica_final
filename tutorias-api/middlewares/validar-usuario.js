@@ -27,7 +27,7 @@ async function validarAutorizacion(req, res, next) {
       throw error;
     }
 
-    req.auth = decodedToken;
+    req.auth = users[0];
     next();
 
   } catch (err) {

@@ -27,7 +27,7 @@ async function getTematicas(req, res) {
         // devolvemos 404 Not Found si no encontramos el user en base de datos.
         res.status(404);
   
-        return res.send({ error: 'tematica encontrada' });
+        return res.send({ error: 'tematica no encontrada' });
       }
       
       return res.send(rows[0]);
