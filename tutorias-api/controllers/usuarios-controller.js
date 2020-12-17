@@ -1,6 +1,9 @@
 const Joi = require('joi');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const fs = require('fs');
+const path = require('path');
+
 
 const { database } = require('../infraestructure');
 
@@ -32,10 +35,10 @@ async function getusuariosById(req, res) {
 
 //Función para crear un usuario
 async function createUsuario(req, res) {
-         
+       
             
     try {
-      
+                        
       const { nombre, email, login, password, experto, empresa } = req.body;
   
       const userSchema = Joi.object({
@@ -49,9 +52,9 @@ async function createUsuario(req, res) {
       //validar la entrada (body)
       await userSchema.validateAsync({ nombre, email, login, password, experto });
           
-      const [users] = await database.pool.query('SELECT * FROM usuarios WHERE email = ?', email);
+      const [emails] = await database.pool.query('SELECT * FROM usuarios WHERE email = ?', email);
       //comprobar si existe el email que viene en el body
-      if (users.length) {
+      if (emails.length) {
         const err = new Error('Ya existe un usuario con ese email');
         //si existe, devolvemos 409
         err.code = 409;
@@ -65,16 +68,19 @@ async function createUsuario(req, res) {
         err.code = 409;
         throw err;
       }
-  
+              
       const passwordHash = await bcrypt.hash(password, 10);
       //insertar el usuario en bbdd (con la password encriptada)
-      const [rows] = await database.pool.query('INSERT INTO usuarios (nombre, email, login, password, experto, empresa) VALUES (?, ?, ?, ?, ?, ?)', [nombre, email, login, passwordHash, experto, empresa]);
+      const [usuario] = await database.pool.query('INSERT INTO usuarios (nombre, email, login, password, experto, empresa, imagen) VALUES (?, ?, ?, ?, ?, ?, ?)', [nombre, email, login, passwordHash, experto, empresa, photo]);      
   
-      const createdId = rows.insertId;
+      const createdId = usuario.insertId;
       //devolver usuario creado
       const [selectRows] = await database.pool.query('SELECT * FROM usuarios WHERE id = ?', createdId);
       
       const tokenPayload = { id: selectRows[0].id };
+      //Recuerda que aqui estas enviando la imagen despues de crear el usuario (prueba a ir cambiando, esta linea de lugar)
+      fs.writeFileSync(path.join('images', 'usuario-' + createdId + '.jpg'), req.file.buffer);
+      const photo = 'http://localhost:8080/static/usuario-' + createdId + '.jpg';
               
       const token = jwt.sign(
         tokenPayload,
@@ -168,16 +174,16 @@ async function createUsuario(req, res) {
     try {
       // validamos los datos de entrada.
       
-      const { id } = req.params;
+      const { id } = req.auth;
       let schema = Joi.number().positive().required();
       await schema.validateAsync(id);
-  
+      
       const { login, password, experto, empresa } = req.body;
   
       schema = Joi.object({
         login: Joi.string().required(),
         password: Joi.string().min(8).max(20).required(),
-        experto: Joi.boolean().required(),
+        experto: Joi.number().required(),
         empresa: Joi.string()
       });
   
@@ -185,17 +191,21 @@ async function createUsuario(req, res) {
   
       //se busca el usuario a modificar
       
-      const [rows] = await database.pool.query('SELECT * FROM usuarios WHERE id = ?',id);
+      const [usuario] = await database.pool.query('SELECT * FROM usuarios WHERE id = ?',id);
   
-      if (!rows || !rows.length) {
+      if (!usuario || !usuario.length) {
         res.status(404);
         return res.send({ error: 'Usuario no encontrado' });
       }
+
+      fs.writeFileSync(path.join('images', 'usuario-' + req.auth.id + '.jpg'), req.file.buffer)
+       const photo = 'http://localhost:8080/static/usuario-' + req.auth.id + '.jpg'
+      
       
       const passwordHash = await bcrypt.hash(password, 10);
       // modificar el usuario en la base de datos
       
-      await database.pool.query('UPDATE usuarios SET login = ?, password = ?, experto = ?, empresa = ? WHERE id = ?', [login, passwordHash, experto, empresa, id]);
+      await database.pool.query('UPDATE usuarios SET login = ?, password = ?, experto = ?, empresa = ?, imagen = ? WHERE id = ?', [login, passwordHash, experto, empresa, photo, id]);
   
       // devolvemos el usuario modificado.
       
@@ -211,6 +221,7 @@ async function createUsuario(req, res) {
   
       res.send({token,...selectRows[0]});
     } catch (err) {
+      console.log(err)
       res.status(400);
       res.send({ error: err.message });
     }

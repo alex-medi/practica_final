@@ -1,4 +1,7 @@
 const Joi = require('joi');
+const fs = require('fs');
+const path = require('path');
+
 
 const { database } = require('../infraestructure');
 
@@ -8,7 +11,7 @@ async function createPregunta(req, res) {
      //No es necesario poner aqui de momento el rol de usuario
      const { tematicaId } = req.params;
      const { id } = req.auth;
-     
+     const { captura } = req.file
      const { titulo,cuerpo } = req.body;
    
      const Schema = Joi.object({
@@ -27,13 +30,16 @@ async function createPregunta(req, res) {
         throw err;
       }
        const respondida = 0;
-       const resuelta = 0;               
+       const resuelta = 0;
+                 
         
      //3. Insertar la pregunta
-     const [rows] = await database.pool.query('INSERT INTO preguntas (titulo, cuerpo, respondida, resuelta, id_usuario, id_tematica) VALUES (?, ?, ?, ?, ?, ?)', [titulo,cuerpo,respondida,resuelta,id,tematicaId]);
+     const [pregunta] = await database.pool.query('INSERT INTO preguntas (titulo, cuerpo, respondida, resuelta, id_usuario, id_tematica) VALUES (?, ?, ?, ?, ?, ?)', [titulo,cuerpo,respondida,resuelta,id,tematicaId]);
    
-       const {insertId} = rows;
-
+       const {insertId} = pregunta;
+       //Recuerda que aqui estas enviando la imagen despues de crear la pregunta (prueba a ir cambiando, esta linea de lugar)
+       fs.writeFileSync(path.join('capturas', 'pregunta-' + insertId + '.jpg'), req.file.buffer)
+       captura = 'http://localhost:8080/static/pregunta-' + insertId + '.jpg'
        
        
        //4. Mostramos la pregunta

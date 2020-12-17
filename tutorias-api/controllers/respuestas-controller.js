@@ -1,4 +1,6 @@
 const Joi = require('joi');
+const fs = require('fs');
+const path = require('path');
 
 const { database } = require('../infraestructure');
 
@@ -6,7 +8,7 @@ async function responderPregunta(req, res) {
     try{
      const { preguntaId } = req.params;
      const { id, experto } = req.auth;
-     
+     const { captura } = req.file
      const { descripcion } = req.body;
    
      const Schema = Joi.object({
@@ -31,12 +33,19 @@ async function responderPregunta(req, res) {
         err.code = 409;
         throw err;
       }
-             
+
+      fs.writeFileSync(path.join('capturas', 'respuesta-' + req.auth.id + '.jpg'), req.file.buffer)
+       captura = 'http://localhost:8080/static/respuesta-' + req.auth.id + '.jpg'
+           
         
      //3. Insertar la respuesta
-     const [rows] = await database.pool.query('INSERT INTO respuestas (descripcion, id_experto, id_pregunta) VALUES (?, ?, ?)', [descripcion,id,preguntaId]);
+     const [respuesta] = await database.pool.query('INSERT INTO respuestas (descripcion, id_experto, id_pregunta) VALUES (?, ?, ?)', [descripcion,id,preguntaId]);
    
-       const {insertId} = rows;
+       const {insertId} = respuesta;
+
+       //Recuerda que aqui estas enviando la imagen despues de crear la respuesta (prueba a ir cambiando, esta linea de lugar)
+       fs.writeFileSync(path.join('capturas', 'pregunta-' + insertId + '.jpg'), req.file.buffer)
+       captura = 'http://localhost:8080/static/pregunta-' + insertId + '.jpg'
 
        //4. Ponemos la pregunta como contestada
 

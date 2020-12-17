@@ -1,7 +1,8 @@
 require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
-const cors = require('cors')
+const cors = require('cors');
+const multer  = require('multer');
 
 const { TematicasController,
     UsuariosController,
@@ -13,8 +14,9 @@ const { TematicasController,
 const { validarAutorizacion } = require('./middlewares');
 const { HTTP_PORT } = process.env;
 
+const upload = multer()
 const app = express();
-app.use(cors())
+app.use(cors());
 app.use(bodyParser.json());
 
 // Endpoints / Rutas
@@ -25,20 +27,23 @@ app.get('/api/tematicas/:nombre', TematicasController.getTematicasBynombre);
 
 // Usuarios
 app.get('/api/usuarios/:id', UsuariosController.getusuariosById);
-app.post('/api/usuarios', UsuariosController.createUsuario);
+app.post('/api/usuarios', upload.single('photo'), UsuariosController.createUsuario);
 app.post('/api/usuarios/login', UsuariosController.login);
 app.delete('/api/usuarios/:id', UsuariosController.deleteUsuario);
-app.put('/api/usuarios/:id', UsuariosController.modifyUsuario);
+app.put('/api/usuarios/', validarAutorizacion, upload.single('photo'), UsuariosController.modifyUsuario);
 
 //Preguntas
-app.post('/api/preguntas/:tematicaId', validarAutorizacion, PreguntasController.createPregunta);
+app.post('/api/preguntas/:tematicaId', validarAutorizacion, upload.single('captura'), PreguntasController.createPregunta);
 app.get('/api/preguntas/:tematicaId', PreguntasController.getPreguntasBytematicaId);
 app.get('/api/pregunta/:key', PreguntasController.getPreguntasByKey);
 
 
 //Respuestas
-app.post('/api/respuestas/:preguntaId', validarAutorizacion, RespuestasController.responderPregunta);
+app.post('/api/respuestas/:preguntaId', validarAutorizacion, upload.single('captura'), RespuestasController.responderPregunta);
 app.get('/api/respuestas/:preguntaId', validarAutorizacion, RespuestasController.getRespuestasBypreguntasId);
+
+app.use('/static', express.static('images'))
+app.use('/static', express.static('capturas'))
 
 // Escuchar un puerto
 app.listen(HTTP_PORT, () => console.log(`Escuchando en el puerto ${HTTP_PORT}`));
