@@ -2,7 +2,6 @@ const Joi = require('joi');
 const fs = require('fs');
 const path = require('path');
 
-
 const { database } = require('../infraestructure');
 
 //crear pregunta
@@ -11,7 +10,7 @@ async function createPregunta(req, res) {
      //No es necesario poner aqui de momento el rol de usuario
      const { tematicaId } = req.params;
      const { id } = req.auth;
-     const { captura } = req.file
+     let  captura  = req.file
      const { titulo,cuerpo } = req.body;
    
      const Schema = Joi.object({
@@ -31,17 +30,19 @@ async function createPregunta(req, res) {
       }
        const respondida = 0;
        const resuelta = 0;
-                 
+                     
         
      //3. Insertar la pregunta
      const [pregunta] = await database.pool.query('INSERT INTO preguntas (titulo, cuerpo, respondida, resuelta, id_usuario, id_tematica) VALUES (?, ?, ?, ?, ?, ?)', [titulo,cuerpo,respondida,resuelta,id,tematicaId]);
    
-       const {insertId} = pregunta;
-       //Recuerda que aqui estas enviando la imagen despues de crear la pregunta (prueba a ir cambiando, esta linea de lugar)
-       fs.writeFileSync(path.join('capturas', 'pregunta-' + insertId + '.jpg'), req.file.buffer)
-       captura = 'http://localhost:8080/static/pregunta-' + insertId + '.jpg'
-       
-       
+     const {insertId} = pregunta;
+     if(req.file){
+      fs.writeFileSync(path.join('capturas', 'pregunta-' + insertId + '.jpg'), captura.buffer);
+      captura = 'http://localhost:8080/static/pregunta-' + insertId + '.jpg';
+      await database.pool.query('UPDATE preguntas SET captura = ? WHERE id = ?', [captura,insertId]);
+    }
+           
+              
        //4. Mostramos la pregunta
        const [ask] = await database.pool.query('SELECT * FROM preguntas WHERE id = ?', insertId);
        res.status(201);
@@ -71,7 +72,7 @@ async function createPregunta(req, res) {
        throw err;
      }
       //Aqui se selecciona por tematica          
-      const [question] = await database.pool.query('SELECT * FROM preguntas WHERE id_tematica = ?',tematicaId);
+      const [question] = await database.pool.query('SELECT p.*, u.login FROM preguntas as p JOIN usuarios as u ON p.id_usuario = u.id WHERE id_tematica = ?',tematicaId);
       res.send(question);
     
     }catch(err){
@@ -108,10 +109,37 @@ async function getPreguntasByKey(req, res) {
   }
 }
 
+//Funcion que obtiene preguntas por id
+async function getPreguntasById(req, res) {
+  try {
+    // validamos que el nombre es correcto
+    const { id } = req.params;
+    const schema = Joi.number();
+    await schema.validateAsync(id);
+         
+    const [rows] = await database.pool.query('SELECT p.*, u.login FROM preguntas as p JOIN usuarios as u ON p.id_usuario = u.id WHERE p.id = ?', id);
+
+    if (!rows || !rows.length) {
+      // devolvemos 404 Not Found si no encontramos el user en base de datos.
+      res.status(404);
+
+      return res.send({ error: 'pregunta no encontrado'});
+    }
+    
+    return res.send(rows[0]);
+
+  } catch (err) {
+    // enviamos el error al cliente
+    res.status(400);
+    res.send({ error: err.message });
+  }
+}
+
    module.exports = {
     createPregunta,
     getPreguntasBytematicaId,
-    getPreguntasByKey
+    getPreguntasByKey,
+    getPreguntasById
   };
 
 

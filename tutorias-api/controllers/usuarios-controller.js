@@ -35,11 +35,14 @@ async function getusuariosById(req, res) {
 
 //Función para crear un usuario
 async function createUsuario(req, res) {
-       
+    
             
     try {
                         
-      const { nombre, email, login, password, experto, empresa } = req.body;
+      const { nombre, email, login, password, empresa } = req.body;
+      const experto = req.body.experto === "1"
+
+      let imagen = req.file
   
       const userSchema = Joi.object({
         nombre: Joi.string().required(),
@@ -68,19 +71,26 @@ async function createUsuario(req, res) {
         err.code = 409;
         throw err;
       }
+      
               
       const passwordHash = await bcrypt.hash(password, 10);
       //insertar el usuario en bbdd (con la password encriptada)
-      const [usuario] = await database.pool.query('INSERT INTO usuarios (nombre, email, login, password, experto, empresa, imagen) VALUES (?, ?, ?, ?, ?, ?, ?)', [nombre, email, login, passwordHash, experto, empresa, photo]);      
+      const [usuario] = await database.pool.query('INSERT INTO usuarios (nombre, email, login, password, experto, empresa) VALUES (?, ?, ?, ?, ?, ?)', [nombre, email, login, passwordHash, experto, empresa]);      
   
       const createdId = usuario.insertId;
+      if(req.file){
+        fs.writeFileSync(path.join('images', 'usuario-' + createdId + '.jpg'), imagen.buffer);
+        imagen = 'http://localhost:8080/static/usuario-' + createdId + '.jpg';
+        await database.pool.query('UPDATE usuarios SET imagen = ? WHERE id = ?', [imagen,createdId]);
+      }
+
+      
       //devolver usuario creado
       const [selectRows] = await database.pool.query('SELECT * FROM usuarios WHERE id = ?', createdId);
       
       const tokenPayload = { id: selectRows[0].id };
       //Recuerda que aqui estas enviando la imagen despues de crear el usuario (prueba a ir cambiando, esta linea de lugar)
-      fs.writeFileSync(path.join('images', 'usuario-' + createdId + '.jpg'), req.file.buffer);
-      const photo = 'http://localhost:8080/static/usuario-' + createdId + '.jpg';
+      
               
       const token = jwt.sign(
         tokenPayload,
@@ -140,7 +150,16 @@ async function createUsuario(req, res) {
         { expiresIn: '30d' },
       );
       
-      res.send({ token, login: user.login, id: user.id, empresa: user.empresa, experto: user.experto, nombre: user.nombre, email: user.email });
+      res.send({
+        token,
+        login: user.login,
+        id: user.id,
+        empresa: user.empresa, 
+        experto: user.experto,
+        nombre: user.nombre,
+        email: user.email,
+        imagen: user.imagen
+      });
   
     } catch (err) {
       res.status(err.code || 500);
@@ -175,15 +194,18 @@ async function createUsuario(req, res) {
       // validamos los datos de entrada.
       
       const { id } = req.auth;
+      let imagen = req.file
       let schema = Joi.number().positive().required();
       await schema.validateAsync(id);
       
-      const { login, password, experto, empresa } = req.body;
+      const { login, experto, empresa } = req.body;
+      const password = req.body.password ? req.body.password : null
+      
   
       schema = Joi.object({
-        login: Joi.string().required(),
-        password: Joi.string().min(8).max(20).required(),
-        experto: Joi.number().required(),
+        login: Joi.string(),
+        password: Joi.string().min(8).max(20).allow(null),
+        experto: Joi.number(),
         empresa: Joi.string()
       });
   
@@ -197,15 +219,19 @@ async function createUsuario(req, res) {
         res.status(404);
         return res.send({ error: 'Usuario no encontrado' });
       }
-
-      fs.writeFileSync(path.join('images', 'usuario-' + req.auth.id + '.jpg'), req.file.buffer)
-       const photo = 'http://localhost:8080/static/usuario-' + req.auth.id + '.jpg'
       
+      if(req.file){
+      fs.writeFileSync(path.join('images', 'usuario-' + req.auth.id + '.jpg'), imagen.buffer)
+       imagen = 'http://localhost:8080/static/usuario-' + req.auth.id + '.jpg?' + Date.now()
+      }
       
-      const passwordHash = await bcrypt.hash(password, 10);
+      let passwordHash = usuario[0].password
+      if (password) {
+        passwordHash = await bcrypt.hash(password, 10);
+      }
       // modificar el usuario en la base de datos
       
-      await database.pool.query('UPDATE usuarios SET login = ?, password = ?, experto = ?, empresa = ?, imagen = ? WHERE id = ?', [login, passwordHash, experto, empresa, photo, id]);
+      await database.pool.query('UPDATE usuarios SET login = ?, password = ?, experto = ?, empresa = ?, imagen = ? WHERE id = ?', [login, passwordHash, experto, empresa, imagen, id]);
   
       // devolvemos el usuario modificado.
       

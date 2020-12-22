@@ -27,14 +27,15 @@ app.get('/api/tematicas/:nombre', TematicasController.getTematicasBynombre);
 
 // Usuarios
 app.get('/api/usuarios/:id', UsuariosController.getusuariosById);
-app.post('/api/usuarios', upload.single('photo'), UsuariosController.createUsuario);
+app.post('/api/usuarios', upload.single('imagen'), UsuariosController.createUsuario);
 app.post('/api/usuarios/login', UsuariosController.login);
 app.delete('/api/usuarios/:id', UsuariosController.deleteUsuario);
-app.put('/api/usuarios/', validarAutorizacion, upload.single('photo'), UsuariosController.modifyUsuario);
+app.put('/api/usuarios/', validarAutorizacion, upload.single('imagen'), UsuariosController.modifyUsuario);
 
 //Preguntas
 app.post('/api/preguntas/:tematicaId', validarAutorizacion, upload.single('captura'), PreguntasController.createPregunta);
 app.get('/api/preguntas/:tematicaId', PreguntasController.getPreguntasBytematicaId);
+app.get('/api/preguntaId/:id', PreguntasController.getPreguntasById);
 app.get('/api/pregunta/:key', PreguntasController.getPreguntasByKey);
 
 
