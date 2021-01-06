@@ -64,7 +64,6 @@ async function responderPregunta(req, res) {
 
   }
 
-
 }
 
 //Obtener respuestas por id de tematica
@@ -82,7 +81,7 @@ async function getRespuestasBypreguntasId(req, res) {
       throw err;
     }
     //Aqui se seleccionan todas las respuestas de una pregunta          
-    const [respuesta] = await database.pool.query('SELECT r.*, u.login FROM respuestas as r JOIN usuarios as u ON r.id_experto = u.id WHERE id_pregunta = ?', preguntaId);
+    const [respuesta] = await database.pool.query('SELECT r.*, u.login,(select round(avg(rating),0) from puntuacion where id_respuesta = r.id) as rating FROM respuestas as r JOIN usuarios as u ON r.id_experto = u.id WHERE id_pregunta = ?', preguntaId);
     res.send(respuesta);
 
   } catch (err) {
@@ -91,8 +90,51 @@ async function getRespuestasBypreguntasId(req, res) {
 
   }
 }
+
+async function createScore(req, res) {
+  try{
+    // 1. validar la entrada (body)
+   const { respuestaId } = req.params;
+   const { id } = req.auth;
+   const { rating } = req.body;
+ 
+   const userSchema = Joi.object({
+           
+     rating: Joi.number().max(5).min(1).required(),
+     
+   });
+   await userSchema.validateAsync({ rating });
+ 
+   //2. comprobar que existe la respuesta
+   const [respuestas] = await database.pool.query('SELECT * FROM respuestas WHERE id = ?', respuestaId);
+ 
+   if (!respuestas.length) {
+     const err = new Error('No existe esta respuesta');
+     err.code = 409;
+     throw err;
+   }
+ 
+   //3. Insertar rating
+   const [rows] = await database.pool.query('INSERT INTO puntuacion (rating, id_usuario, id_respuesta) VALUES (?, ?, ?)', [rating,id,respuestaId]);
+ 
+     const {insertId} = rows;
+ 
+     const [score] = await database.pool.query('SELECT * FROM puntuacion WHERE id = ?', insertId);
+     res.status(201);
+     res.send(score[0]);
+ 
+   
+  }catch(err){
+   res.status(err.code || 500);
+   res.send(err.message );
+ 
+  }
+  
+}
+
 module.exports = {
   responderPregunta,
-  getRespuestasBypreguntasId
+  getRespuestasBypreguntasId,
+  createScore
 
 };

@@ -38,10 +38,12 @@ app.get('/api/preguntas/:tematicaId', PreguntasController.getPreguntasBytematica
 app.get('/api/preguntaId/:id', PreguntasController.getPreguntasById);
 app.get('/api/pregunta/:key', PreguntasController.getPreguntasByKey);
 
-
 //Respuestas
 app.post('/api/respuestas/:preguntaId', validarAutorizacion, upload.single('captura'), RespuestasController.responderPregunta);
 app.get('/api/respuestas/:preguntaId', validarAutorizacion, RespuestasController.getRespuestasBypreguntasId);
+
+//Puntuacion
+app.post('/api/puntuacion/:respuestaId', validarAutorizacion, RespuestasController.createScore);
 
 app.use('/static', express.static('images'))
 app.use('/static', express.static('capturas'))

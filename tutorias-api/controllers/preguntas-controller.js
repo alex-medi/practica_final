@@ -92,7 +92,7 @@ async function getPreguntasByKey(req, res) {
     const key2 = '%'+key+'%';
          
     const [clave] = await database.pool.query('SELECT * FROM preguntas WHERE titulo like ? or cuerpo like ?',[key2,key2]);
-
+    
     if (!clave || !clave.length) {
       // devolvemos 404 Not Found si no lo encontramos en la en base de datos.
       res.status(404);
