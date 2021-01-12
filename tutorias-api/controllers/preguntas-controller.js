@@ -112,7 +112,7 @@ async function getPreguntasByKey(req, res) {
 //Funcion que obtiene preguntas por id
 async function getPreguntasById(req, res) {
   try {
-    // validamos que el nombre es correcto
+    // validamos
     const { id } = req.params;
     const schema = Joi.number();
     await schema.validateAsync(id);
@@ -120,7 +120,7 @@ async function getPreguntasById(req, res) {
     const [rows] = await database.pool.query('SELECT p.*, u.login FROM preguntas as p JOIN usuarios as u ON p.id_usuario = u.id WHERE p.id = ?', id);
 
     if (!rows || !rows.length) {
-      // devolvemos 404 Not Found si no encontramos el user en base de datos.
+      // devolvemos 404 Not Found si no le encontramos en base de datos.
       res.status(404);
 
       return res.send({ error: 'pregunta no encontrado'});

@@ -41,6 +41,7 @@ app.get('/api/pregunta/:key', PreguntasController.getPreguntasByKey);
 //Respuestas
 app.post('/api/respuestas/:preguntaId', validarAutorizacion, upload.single('captura'), RespuestasController.responderPregunta);
 app.get('/api/respuestas/:preguntaId', validarAutorizacion, RespuestasController.getRespuestasBypreguntasId);
+app.get('/api/respuestaId/:id', validarAutorizacion, RespuestasController.getRespuestasById);
 
 //Puntuacion
 app.post('/api/puntuacion/:respuestaId', validarAutorizacion, RespuestasController.createScore);

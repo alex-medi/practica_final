@@ -35,11 +35,10 @@ async function getusuariosById(req, res) {
 
 //Función para crear un usuario
 async function createUsuario(req, res) {
-    
-            
+                
     try {
                         
-      const { nombre, email, login, password, empresa } = req.body;
+      const { nombre, email, login, password, repeatedPassword, empresa } = req.body;
       const experto = req.body.experto === "1"
 
       let imagen = req.file
@@ -49,11 +48,20 @@ async function createUsuario(req, res) {
         email: Joi.string().email().required(),
         login: Joi.string().required(),
         password: Joi.string().min(8).max(20).required(),
+        repeatedPassword: Joi.string().min(6).max(20).required(),
         experto: Joi.boolean().required(),
         empresa: Joi.string()
       });
       //validar la entrada (body)
-      await userSchema.validateAsync({ nombre, email, login, password, experto });
+      await userSchema.validateAsync({ nombre, email, login, password, repeatedPassword, experto });
+      
+      //validar contraseña
+      if (password !== repeatedPassword) {
+        const err = new Error('La contraseña debe ser igual en ambos campos');
+        err.code = 400;
+        throw err;
+      }
+        
           
       const [emails] = await database.pool.query('SELECT * FROM usuarios WHERE email = ?', email);
       //comprobar si existe el email que viene en el body
@@ -198,15 +206,16 @@ async function createUsuario(req, res) {
       let schema = Joi.number().positive().required();
       await schema.validateAsync(id);
       
-      const { login, experto, empresa } = req.body;
+      const { experto } = req.body;
       const password = req.body.password ? req.body.password : null
-      
-  
+      const login = req.body.login ? req.body.login : null
+      const empresa = req.body.empresa ? req.body.empresa : null
+                
       schema = Joi.object({
-        login: Joi.string(),
+        login: Joi.string().allow(null),
         password: Joi.string().min(8).max(20).allow(null),
         experto: Joi.number(),
-        empresa: Joi.string()
+        empresa: Joi.string().allow(null)
       });
   
       await schema.validateAsync({ login, password, experto, empresa });
@@ -223,15 +232,29 @@ async function createUsuario(req, res) {
       if(req.file){
       fs.writeFileSync(path.join('images', 'usuario-' + req.auth.id + '.jpg'), imagen.buffer)
        imagen = 'http://localhost:8080/static/usuario-' + req.auth.id + '.jpg?' + Date.now()
+      } else {
+        imagen = usuario[0].imagen
       }
       
       let passwordHash = usuario[0].password
       if (password) {
         passwordHash = await bcrypt.hash(password, 10);
       }
+
+      let newLogin = usuario[0].login
+      if (login){
+        newLogin = req.body.login
+      }
+
+      let newEmpresa = usuario[0].empresa
+      if (empresa) {
+        newEmpresa = req.body.empresa
+      }
+                              
+            
       // modificar el usuario en la base de datos
       
-      await database.pool.query('UPDATE usuarios SET login = ?, password = ?, experto = ?, empresa = ?, imagen = ? WHERE id = ?', [login, passwordHash, experto, empresa, imagen, id]);
+      await database.pool.query('UPDATE usuarios SET login = ?, password = ?, experto = ?, empresa = ?, imagen = ? WHERE id = ?', [newLogin, passwordHash, experto, newEmpresa, imagen, id]);
   
       // devolvemos el usuario modificado.
       
