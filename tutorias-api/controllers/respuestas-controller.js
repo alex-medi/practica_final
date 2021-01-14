@@ -132,32 +132,6 @@ async function createScore(req, res) {
   
 }
 
-//Funcion que obtiene respuestas por id
-async function getRespuestasById(req, res) {
-  try {
-    // validamos
-    const { id } = req.params;
-    const schema = Joi.number();
-    await schema.validateAsync(id);
-         
-    const [rows] = await database.pool.query('SELECT * FROM respuestas WHERE id = ?', id);
-
-    if (!rows || !rows.length) {
-      // devolvemos 404 Not Found si no la encontramos en base de datos.
-      res.status(404);
-
-      return res.send({ error: 'respuesta no encontrado'});
-    }
-    
-    return res.send(rows[0]);
-
-  } catch (err) {
-    // enviamos el error al cliente
-    res.status(400);
-    res.send({ error: err.message });
-  }
-}
-
 module.exports = {
   responderPregunta,
   getRespuestasBypreguntasId,

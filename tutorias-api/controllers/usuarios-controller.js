@@ -174,29 +174,7 @@ async function createUsuario(req, res) {
       res.send({ error: err.message });
     }
   }
-
-  //borrar usuario
-  async function deleteUsuario(req, res) {
-    try {
-      const { id } = req.params;
-      const [usuarios] = await database.pool.query('SELECT * FROM usuarios WHERE id = ?', id);
-      //comprobar que el usuario existe
-      if (!usuarios.length) {
-        res.status(404);
-        return res.send({ error: 'Usuario no encontrado' });
-      }
-          
-       
-      await database.pool.query('DELETE FROM usuarios WHERE id = ?', id);
   
-      res.status(204);
-      res.send();
-    } catch (err) {
-      res.status(500);
-      res.send({ error: err.message });
-    }
-  }
-
   async function modifyUsuario(req, res) {
     try {
       // validamos los datos de entrada.

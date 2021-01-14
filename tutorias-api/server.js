@@ -29,7 +29,6 @@ app.get('/api/tematicas/:nombre', TematicasController.getTematicasBynombre);
 app.get('/api/usuarios/:id', UsuariosController.getusuariosById);
 app.post('/api/usuarios', upload.single('imagen'), UsuariosController.createUsuario);
 app.post('/api/usuarios/login', UsuariosController.login);
-app.delete('/api/usuarios/:id', UsuariosController.deleteUsuario);
 app.put('/api/usuarios/', validarAutorizacion, upload.single('imagen'), UsuariosController.modifyUsuario);
 
 //Preguntas
@@ -41,7 +40,6 @@ app.get('/api/pregunta/:key', PreguntasController.getPreguntasByKey);
 //Respuestas
 app.post('/api/respuestas/:preguntaId', validarAutorizacion, upload.single('captura'), RespuestasController.responderPregunta);
 app.get('/api/respuestas/:preguntaId', validarAutorizacion, RespuestasController.getRespuestasBypreguntasId);
-app.get('/api/respuestaId/:id', validarAutorizacion, RespuestasController.getRespuestasById);
 
 //Puntuacion
 app.post('/api/puntuacion/:respuestaId', validarAutorizacion, RespuestasController.createScore);
