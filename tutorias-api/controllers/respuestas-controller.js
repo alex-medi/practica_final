@@ -136,6 +136,5 @@ module.exports = {
   responderPregunta,
   getRespuestasBypreguntasId,
   createScore,
-  getRespuestasById
-
+  
 };

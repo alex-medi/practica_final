@@ -259,6 +259,5 @@ async function createUsuario(req, res) {
     getusuariosById,
     createUsuario,
     login,
-    deleteUsuario,
     modifyUsuario
   };
