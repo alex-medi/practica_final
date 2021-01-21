@@ -72,7 +72,7 @@ async function createPregunta(req, res) {
        throw err;
      }
       //Aqui se selecciona por tematica          
-      const [question] = await database.pool.query('SELECT p.*, u.login FROM preguntas as p JOIN usuarios as u ON p.id_usuario = u.id WHERE id_tematica = ?',tematicaId);
+      const [question] = await database.pool.query('SELECT p.*, u.login FROM preguntas as p JOIN usuarios as u ON p.id_usuario = u.id WHERE id_tematica = ? ORDER BY fecha_consulta desc',tematicaId);
       res.send(question);
     
     }catch(err){
